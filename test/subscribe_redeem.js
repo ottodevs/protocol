@@ -143,37 +143,76 @@ contract('Subscribe', (accounts) => {
     })
 
     it('Creates shares using the reference asset', () => {
+      let reqVal;
       const wantedShares = new BigNumber(1e+17);
-      const offeredValue = new BigNumber(1e+17);
-      return etherTokenContract.approve(
-        subscribeContract.address, offeredValue, {from: INVESTOR}
-      )
+      return vaultContract.getRefPriceForNumShares.call(wantedShares)
+      .then(res => {
+        console.log(res);
+        reqVal = res;
+        return etherTokenContract.approve(
+          subscribeContract.address, reqVal, {from: INVESTOR}
+        )
+      })
       .then(() => subscribeContract.createSharesWithReferenceAsset(
-        vaultContract.address, wantedShares, offeredValue, {from: INVESTOR}
-      ))
-      .then(() => vaultContract.balanceOf.call(INVESTOR)) .then(res => assert.equal(res.toNumber(), wantedShares.toNumber()))
-    })
-
-    it('Creates shares again after initial share creation', () => {
-      let prevShares;
-      const wantedShares = new BigNumber(2e+17);
-      const offeredValue = new BigNumber(2e+17);
-      return vaultContract.balanceOf.call(INVESTOR)
-      .then((res) => { prevShares = res; })
-      .then(() => etherTokenContract.approve(
-        subscribeContract.address, offeredValue, {from: INVESTOR}
-      ))
-      .then(() => subscribeContract.createSharesWithReferenceAsset(
-        vaultContract.address, wantedShares, offeredValue, {from: INVESTOR}
+        vaultContract.address, wantedShares, reqVal, {from: INVESTOR}
       ))
       .then(() => vaultContract.balanceOf.call(INVESTOR))
-      .then(res => assert.equal(res.toNumber(), wantedShares.plus(prevShares).toNumber()))
+      .then(res => assert.equal(res.toNumber(), wantedShares.toNumber()))
+    })
+
+    it('Creates shares when investment greater than portfolio funds', () => {
+      let reqVal;
+      let origShares;
+      const wantedShares = new BigNumber(2e+17);
+      return vaultContract.balanceOf.call(INVESTOR)
+      .then(res => {
+        origShares = res;
+        return vaultContract.getRefPriceForNumShares.call(wantedShares)
+      })
+      .then(res => {
+        console.log(res);
+        reqVal = res;
+        return etherTokenContract.approve(
+          subscribeContract.address, reqVal, {from: INVESTOR}
+        )
+      })
+      .then(() => subscribeContract.createSharesWithReferenceAsset(
+        vaultContract.address, wantedShares, reqVal, {from: INVESTOR}
+      ))
+      .then(() => vaultContract.balanceOf.call(INVESTOR))
+      .then(res => assert.equal(res.toNumber(), wantedShares.plus(origShares)))
+    })
+
+    it('Creates shares when investment less than portfolio funds', () => {
+      let reqVal;
+      let origShares;
+      const wantedShares = new BigNumber(1e+17);
+      return vaultContract.balanceOf.call(INVESTOR)
+      .then(res => {
+        origShares = res;
+        return vaultContract.getRefPriceForNumShares.call(wantedShares)
+      })
+      .then(res => {
+        reqVal = res;
+        return etherTokenContract.approve(
+          subscribeContract.address, reqVal, {from: INVESTOR}
+        )
+      })
+      .then(() => subscribeContract.createSharesWithReferenceAsset(
+        vaultContract.address, wantedShares, reqVal, {from: INVESTOR}
+      ))
+      .then(() => vaultContract.balanceOf.call(INVESTOR))
+      .then(res => assert.equal(res.toNumber(), wantedShares.plus(origShares)))
     })
 
     it('Annihilates shares when only ETH invested, and returns assets', () => {
-      const redeemShares = new BigNumber(3e+17);  // all of the shares
-      const originalAmt = web3.toWei(10,'ether');  // all of the token
-      return redeemContract.redeemShares(vaultContract.address, redeemShares, {from: INVESTOR})
+      let redeemShares;
+      const originalAmt = web3.toWei(10, 'ether');  // all of the token
+      return vaultContract.balanceOf.call(INVESTOR) // all the shares
+      .then(res => {
+        redeemShares = res;
+        return redeemContract.redeemShares(vaultContract.address, redeemShares, {from: INVESTOR})
+      })
       .then(() => vaultContract.balanceOf(INVESTOR))
       .then(res => assert.equal(res, 0))
       .then(() => etherTokenContract.balanceOf.call(INVESTOR))
@@ -186,7 +225,12 @@ contract('Subscribe', (accounts) => {
       const mlnAmt = 10000;
       const ethAmt = 20000;
       let refPrice;
-      return vaultContract.getRefPriceForNumShares.call(wantedShares)
+      let ownedShares;
+      return vaultContract.balanceOf.call(INVESTOR)
+      .then(res => {
+        ownedShares = res;
+        return vaultContract.getRefPriceForNumShares.call(wantedShares)
+      })
       .then(res => {
         refPrice = res;
         return etherTokenContract.approve(
@@ -197,7 +241,10 @@ contract('Subscribe', (accounts) => {
         vaultContract.address, wantedShares, refPrice, {from: INVESTOR}
       ))
       .then(() => vaultContract.balanceOf.call(INVESTOR))
-      .then(res => assert.equal(res.toNumber(), wantedShares.toNumber()))
+      .then(res => {
+        ownedShares = ownedShares.plus(wantedShares);
+        assert.equal(res.toNumber(), ownedShares);
+      })
       .then(() => melonTokenContract.approve(exchangeContract.address, mlnAmt, {from: OWNER}))
       .then(() => exchangeContract.make(
         mlnAmt, melonTokenContract.address, ethAmt, etherTokenContract.address, {from: OWNER}
@@ -221,7 +268,8 @@ contract('Subscribe', (accounts) => {
       })
       .then(() => vaultContract.balanceOf.call(INVESTOR))
       .then(res => {
-        assert.equal(res, 2 * wantedShares.toNumber());
+        ownedShares = ownedShares.plus(wantedShares);
+        assert.equal(res.toNumber(), ownedShares.toNumber());
       })
     })
 

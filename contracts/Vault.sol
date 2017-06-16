@@ -157,7 +157,7 @@ contract Vault is DBC, Owned, Shares, SafeMath, VaultProtocol {
     }
 
     /// Pre:  numShares : number of shares in base units
-    /// Post: Returns addresses and required amounts required for each asset in slice
+    /// Post: Returns addresses and amounts required for each asset in slice
     function getSliceForNumShares(uint numShares) constant
         pre_cond(notZero(totalSupply))
         returns (address[200] assets, uint[200] amounts, uint numAssets)
@@ -165,10 +165,10 @@ contract Vault is DBC, Owned, Shares, SafeMath, VaultProtocol {
         numAssets = module.universe.numAssignedAssets();
         for (uint i = 0; i < numAssets; ++i) {
             address assetAddr = address(module.universe.assetAt(i));
-            AssetProtocol Asset = AssetProtocol(assetAddr);
+            AssetProtocol asset = AssetProtocol(assetAddr);
             assets[i] = assetAddr;
-            uint vaultHoldings = Asset.balanceOf(this);
-            amounts[i] = vaultHoldings * (numShares / totalSupply);
+            uint vaultHoldings = asset.balanceOf(this);
+            amounts[i] = (vaultHoldings * numShares) / totalSupply; //TODO: deal with remainder here
         }
     }
 
