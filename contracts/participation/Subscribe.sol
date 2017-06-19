@@ -47,10 +47,10 @@ contract Subscribe is SubscribeProtocol, DBC, SafeMath, Owned {
         uint actualValue = vault.getRefPriceForNumShares(wantedShares);
         // transfer requried amount [ref] from investor to this contract
         assert(refAsset.transferFrom(msg.sender, this, actualValue));
-        if(isPastZero(vault.totalSupply())){  // we need to approve slice in proportion to Vault allocation
+        if (isPastZero(vault.totalSupply())) {  // we need to approve slice in proportion to Vault allocation
             var (assetList, amountList, numAssets) = vault.getSliceForNumShares(wantedShares);
             for (uint ii = 0; ii < numAssets; ii++){
-                if(!isPastZero(amountList[ii]))
+                if (!isPastZero(amountList[ii]))
                     continue;
                 AssetProtocol thisAsset = AssetProtocol(assetList[ii]);
                 thisAsset.approve(ofVault, amountList[ii]);

@@ -144,7 +144,7 @@ contract('Subscribe', (accounts) => {
 
     it('Creates shares using the reference asset', () => {
       let reqVal;
-      const wantedShares = new BigNumber(1e+17);
+      const wantedShares = new BigNumber(1e+18);
       return vaultContract.getRefPriceForNumShares.call(wantedShares)
       .then(res => {
         console.log(res);
@@ -160,10 +160,33 @@ contract('Subscribe', (accounts) => {
       .then(res => assert.equal(res.toNumber(), wantedShares.toNumber()))
     })
 
+    it('Creates shares when investment equal to portfolio funds', () => {
+      let reqVal;
+      let origShares;
+      const wantedShares = new BigNumber(1e+18);
+      return vaultContract.balanceOf.call(INVESTOR)
+      .then(res => {
+        origShares = res;
+        return vaultContract.getRefPriceForNumShares.call(wantedShares)
+      })
+      .then(res => {
+        console.log(res);
+        reqVal = res;
+        return etherTokenContract.approve(
+          subscribeContract.address, reqVal, {from: INVESTOR}
+        )
+      })
+      .then(() => subscribeContract.createSharesWithReferenceAsset(
+        vaultContract.address, wantedShares, reqVal, {from: INVESTOR}
+      ))
+      .then(() => vaultContract.balanceOf.call(INVESTOR))
+      .then(res => assert.equal(res.toNumber(), wantedShares.plus(origShares)))
+    })
+
     it('Creates shares when investment greater than portfolio funds', () => {
       let reqVal;
       let origShares;
-      const wantedShares = new BigNumber(2e+17);
+      const wantedShares = new BigNumber(3e+18);
       return vaultContract.balanceOf.call(INVESTOR)
       .then(res => {
         origShares = res;
@@ -186,7 +209,7 @@ contract('Subscribe', (accounts) => {
     it('Creates shares when investment less than portfolio funds', () => {
       let reqVal;
       let origShares;
-      const wantedShares = new BigNumber(1e+17);
+      const wantedShares = new BigNumber(1e+18);
       return vaultContract.balanceOf.call(INVESTOR)
       .then(res => {
         origShares = res;
