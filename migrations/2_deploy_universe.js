@@ -155,7 +155,7 @@ module.exports = async (deployer, network, accounts) => {
     if (network === 'development') feedBackupOwner = accounts[1];
     else if (network === 'kovan') feedBackupOwner = accounts[0];
     await deployer.deploy(assetList.concat([Exchange]));
-    await deployer.deploy(CryptoCompare, feedBackupOwner, EtherToken.address);
+    await deployer.deploy(CryptoCompare, EtherToken.address, assetList);
     await deployer.deploy(
       Universe,
       assetList.map(a => a.address),
