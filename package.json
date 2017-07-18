@@ -7,7 +7,9 @@
   },
   "scripts": {
     "test": "truffle test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "migrate": "truffle migrate",
+    "migrate:reset": "truffle migrate --reset"
   },
   "publishConfig": {
     "access": "public"
@@ -16,11 +18,7 @@
     "type": "git",
     "url": "git+https://github.com/melonproject/protocol.git"
   },
-  "keywords": [
-    "Ethereum",
-    "Protocol",
-    "Melon"
-  ],
+  "keywords": ["Ethereum", "Protocol", "Melon"],
   "author": "“Reto Trinkler <“rt@melonport.com”>",
   "license": "GPL-3.0",
   "bugs": {
