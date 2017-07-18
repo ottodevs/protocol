@@ -13,7 +13,7 @@
     "plugin:meteor/recommended"
   ],
   "settings": {
-    "import/resolver": meteor,
+    "import/resolver": "meteor",
   },
   "rules": {
     "no-undef": 0,
@@ -30,14 +30,7 @@
     "meteor/no-session": [
       0
     ],
-    "max-len": [
-      2,
-      120,
-      2,
-      {
-        "ignoreComments": true
-      }
-    ],
+    "max-len": ["error", 80, 2],
     "import/no-extraneous-dependencies": 0,
     "no-underscore-dangle": [
       "error",

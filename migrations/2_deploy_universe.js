@@ -34,11 +34,12 @@ const EUROTOKEN_ADDRESS = '0xc151b622fded233111155ec273bfaf2882f13703';
 */
 
 const assetList = [
-  EtherToken,   // [0] refAsset token
-  MelonToken,   // [1] MLN token
-  AragonToken,  // rest alphabetical
+  EtherToken, // [0] refAsset token
+  MelonToken, // [1] MLN token
+  AragonToken, // rest alphabetical
   AventusToken,
   BasicAttentionToken,
+  BancorToken,
   BancorToken,
   BitcoinToken,
   DigixDaoToken,
@@ -58,15 +59,27 @@ const assetList = [
 module.exports = async (deployer, network, accounts) => {
   if (network === 'development') {
     await deployer.deploy([...assetList, Exchange]);
-    await deployer.deploy(CryptoCompare, EtherToken.address, assetList.map(a => a.address));
+
+    // TODO: Make this work.
+    // Currently: Error: VM Exception while processing transaction: out of gas
+    await deployer.deploy(
+      CryptoCompare,
+      EtherToken.address,
+      assetList.map(a => a.address),
+      { gas: 4500000 },
+    );
   }
 
   // TODO: ignite pricefeed
-  // const feedBackupOwner = (network === 'kovan') ? accounts[0] : accounts[1];
-  // await CryptoCompare.ignite({ from: feedBackupOwner, value: new BigNumber(Math.pow(10, 18)) });
-  // await CryptoCompare.updatePriceOraclize({ from: feedBackupOwner });
+  const feedBackupOwner = network === 'kovan' ? accounts[0] : accounts[1];
+  await CryptoCompare.ignite({
+    from: feedBackupOwner,
+    value: new BigNumber(Math.pow(10, 18)),
+  });
+  await CryptoCompare.updatePriceOraclize({ from: feedBackupOwner });
 
-  await deployer.deploy(Universe,
+  await deployer.deploy(
+    Universe,
     assetList.map(a => a.address),
     Array(assetList.length).fill(CryptoCompare.address),
     Array(assetList.length).fill(Exchange.address),

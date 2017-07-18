@@ -8,6 +8,7 @@
   "scripts": {
     "test": "truffle test",
     "migrate": "truffle migrate",
+    "migrate:reset": "truffle migrate --reset",
     "lint": "eslint ."
   },
   "files": [
