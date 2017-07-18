@@ -770,7 +770,7 @@ contract CryptoCompare is DBC, Owned, usingOraclize, ECVerify, b64, JSON_Decoder
     */
     function isFresh(string _dateHeader) internal constant returns(bool) {
         uint timestamp = time.parseDate(_dateHeader);
-        if (timestamp > data[BITCOIN_TOKEN].timestamp) {
+        if (timestamp > data[baseAssets[1]].timestamp) {
             return true;
         }
         return false;
